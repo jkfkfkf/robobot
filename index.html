@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Robot with Emoji Face</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    #robot {
+      margin: 0 auto;
+      width: 200px;
+      height: 200px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #face {
+      width: 100%;
+      height: 100%;
+      max-width: 200px; /* Keep the face within the container size */
+      max-height: 200px;
+    }
+
+    #inputArea {
+      margin-top: 20px;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      font-size: 16px;
+      width: 60%;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #response {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #e0e0e0;
+      border: 1px solid #ccc;
+      width: 80%;
+      margin: 0 auto;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Robot with Emoji Face</h1>
+  <p>Ask the robot something and it will respond!</p>
+
+  <div id="robot">
+    <!-- Display a static emoji face -->
+    <img id="face" src="https://bluemoji.io/cdn-proxy/646218c67da47160c64a84d5/66b3eb826bc6e984281381bc_20.png" alt="Robot Face" />
+  </div>
+
+  <div id="inputArea">
+    <input type="text" id="userMessage" placeholder="Type a message..." />
+    <button onclick="sendMessage()">Ask Robot</button>
+  </div>
+
+  <div id="response"></div>
+
+  <script>
+    // Function to speak the text using SpeechSynthesis API (text-to-speech)
+    function speak(text) {
+      const synth = window.speechSynthesis;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1;  // Speed of speech (1 is normal)
+      utterance.pitch = 1; // Pitch of speech (1 is normal)
+      synth.speak(utterance);
+    }
+
+    // Send the user message to the OpenRouter API and get a response
+    async function sendMessage() {
+      const message = document.getElementById('userMessage').value;
+      if (!message) {
+        alert('Please type a message!');
+        return;
+      }
+
+      // Display loading text
+      document.getElementById('response').style.display = 'block';
+      document.getElementById('response').innerText = 'Processing...';
+
+      // Send message to OpenRouter API
+      try {
+        const apiKey = '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';  // Replace with your actual API key
+        const apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
+
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`, // Make sure to include the Authorization header with the key
+          },
+          body: JSON.stringify({
+            model: 'gpt-3.5-turbo', // Specify the model you want to use
+            prompt: message,  // Use the input message as the prompt
+            max_tokens: 150,  // Adjust as needed
+          }),
+        });
+
+        const data = await response.json();
+
+        // Once response is received, display it and speak it out
+        if (response.ok) {
+          const robotResponse = data.choices[0].text;
+          document.getElementById('response').innerText = `Robot says: ${robotResponse}`;
+          
+          // Speak the robot's response
+          speak(robotResponse);
+        } else {
+          document.getElementById('response').innerText = `Error: ${data.error.message}`;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('response').innerText = 'Sorry, something went wrong. Please try again later.';
+      }
+    }
+
+    // After the robot looks around a bit, it says a default phrase
+    setTimeout(() => {
+      speak("Wow, you got a sick computer setup here!");
+    }, 5000); // Wait 5 seconds before saying this
+  </script>
+</body>
+</html>
